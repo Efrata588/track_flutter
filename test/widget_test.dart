@@ -14,8 +14,8 @@ void main() {
     );
 
     // Verify app title and slogan
-    expect(find.text('Laravel Task Manager'), findsOneWidget);
-    expect(find.text('Organize with clarity. Deliver on time.'), findsOneWidget);
+    expect(find.text('Track'), findsOneWidget);
+    expect(find.text('Stay organized.'), findsOneWidget);
 
     // Verify Login button
     expect(find.text('Log in'), findsOneWidget);
