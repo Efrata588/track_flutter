@@ -16,8 +16,21 @@ import 'widgets/summary_metric_card.dart';
 import 'widgets/task_card.dart';
 import 'widgets/task_form_sheet.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authControllerProvider.notifier).fetchCurrentUser();
+    });
+  }
 
   String _formatTodayDate(DateTime now) {
     return DateFormat('EEEE, MMM d').format(now);
@@ -108,7 +121,7 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final user = ref.watch(authControllerProvider).user;
     final now = ref.watch(clockProvider);
@@ -125,7 +138,12 @@ class DashboardScreen extends ConsumerWidget {
       drawer: const SettingsDrawer(),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () => ref.read(tasksControllerProvider.notifier).refresh(),
+          onRefresh: () async {
+            await Future.wait([
+              ref.read(tasksControllerProvider.notifier).refresh(),
+              ref.read(authControllerProvider.notifier).fetchCurrentUser(),
+            ]);
+          },
           child: tasksAsync.when(
             loading: () => _buildLoadingSkeleton(context),
             error: (err, _) => _buildErrorState(context, ref, err),

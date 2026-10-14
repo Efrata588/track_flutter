@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/state/auth_controller.dart';
 import '../data/task_model.dart';
 import '../data/task_repository.dart';
 
@@ -14,7 +15,11 @@ class TasksController extends AsyncNotifier<List<Task>> {
 
   Future<List<Task>> _fetch() async {
     final repository = ref.read(taskRepositoryProvider);
-    return repository.getTasks();
+    final result = await repository.getTasksWithMeta();
+    if (result.username != null && result.username!.isNotEmpty) {
+      ref.read(authControllerProvider.notifier).updateUsername(result.username!);
+    }
+    return result.tasks;
   }
 
   Future<void> refresh() async {

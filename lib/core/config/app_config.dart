@@ -7,6 +7,7 @@ class AppConfig {
   /// - Overridable at compile time: --dart-define=API_BASE_URL=http://...
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
+    // defaultValue: 'http://10.5.87.12:8000/api/v1',
     defaultValue: 'http://localhost:8000/api/v1',
   );
 
@@ -14,6 +15,8 @@ class AppConfig {
   /// - Overridable at compile time: --dart-define=WEB_URL=http://...
   static const String webUrl = String.fromEnvironment(
     'WEB_URL',
+
+    // defaultValue: 'http://10.5.87.12:8000',
     defaultValue: 'http://localhost:8000',
   );
 

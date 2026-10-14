@@ -81,11 +81,51 @@ class AuthController extends Notifier<AuthState> {
         return;
       }
 
-      final user = await _authRepository.getCurrentUser();
-      state = AuthState.authenticated(user, token);
+      try {
+        final user = await _authRepository.getCurrentUser();
+        state = AuthState.authenticated(user, token);
+      } on UnauthorizedException {
+        await _tokenStorage.deleteToken();
+        state = AuthState.unauthenticated();
+      } catch (_) {
+        // If server is temporarily unreachable or timeout, stay authenticated with stored token
+        state = AuthState(
+          status: AuthStatus.authenticated,
+          token: token,
+          isLoading: false,
+        );
+      }
     } catch (e) {
-      await _tokenStorage.deleteToken();
       state = AuthState.unauthenticated();
+    }
+  }
+
+  Future<void> fetchCurrentUser() async {
+    try {
+      final user = await _authRepository.getCurrentUser();
+      final token = state.token ?? await _tokenStorage.getToken();
+      if (token != null) {
+        state = AuthState.authenticated(user, token);
+      } else {
+        state = state.copyWith(user: user);
+      }
+    } catch (_) {
+      // Non-critical background sync
+    }
+  }
+
+  void updateUsername(String username) {
+    final trimmed = username.trim();
+    if (trimmed.isEmpty) return;
+    final current = state.user;
+    if (current == null) {
+      state = state.copyWith(
+        user: AuthUser(id: 0, name: trimmed, email: ''),
+      );
+    } else if (current.name != trimmed) {
+      state = state.copyWith(
+        user: current.copyWith(name: trimmed),
+      );
     }
   }
 

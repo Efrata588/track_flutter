@@ -13,9 +13,18 @@ class AuthUser {
 
   bool get isEmailVerified => emailVerifiedAt != null;
 
-  factory AuthUser.fromJson(Map<String, dynamic> json) {
+  factory AuthUser.fromJson(Map<String, dynamic> raw) {
+    final Map<String, dynamic> json = (raw['user'] is Map<String, dynamic>)
+        ? raw['user'] as Map<String, dynamic>
+        : (raw['data'] is Map<String, dynamic>)
+            ? raw['data'] as Map<String, dynamic>
+            : raw;
+
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : (int.tryParse(rawId?.toString() ?? '') ?? 0);
+
     return AuthUser(
-      id: json['id'] as int,
+      id: id,
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       emailVerifiedAt: json['email_verified_at'] != null

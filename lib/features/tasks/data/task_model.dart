@@ -19,18 +19,30 @@ class Task {
 
   factory Task.fromJson(Map<String, dynamic> json) {
     final completedAtStr = json['completed_at'] as String?;
-    final isCompletedVal = json['is_completed'] as bool? ?? (completedAtStr != null);
+    final isCompletedVal =
+        json['is_completed'] as bool? ?? (completedAtStr != null);
+
+    final rawId = json['id'];
+    final id =
+        rawId is int ? rawId : (int.tryParse(rawId?.toString() ?? '') ?? 0);
+
+    final dueAtStr = json['due_at'] as String?;
+    final dueAt = dueAtStr != null
+        ? (DateTime.tryParse(dueAtStr) ?? DateTime.now())
+        : DateTime.now();
+
+    final createdAtStr = json['created_at'] as String?;
 
     return Task(
-      id: json['id'] as int,
+      id: id,
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
-      dueAt: DateTime.parse(json['due_at'] as String),
-      completedAt: completedAtStr != null ? DateTime.parse(completedAtStr) : null,
+      dueAt: dueAt,
+      completedAt:
+          completedAtStr != null ? DateTime.tryParse(completedAtStr) : null,
       isCompleted: isCompletedVal,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : null,
+      createdAt:
+          createdAtStr != null ? DateTime.tryParse(createdAtStr) : null,
     );
   }
 

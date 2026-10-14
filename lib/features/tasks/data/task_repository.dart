@@ -15,8 +15,15 @@ class TaskRepository {
 
   Task _extractTask(dynamic raw) {
     if (raw is Map<String, dynamic>) {
-      if (raw['data'] is Map<String, dynamic>) {
-        return Task.fromJson(raw['data'] as Map<String, dynamic>);
+      final data = raw['data'];
+      if (data is Map<String, dynamic>) {
+        if (data['task'] is Map<String, dynamic>) {
+          return Task.fromJson(data['task'] as Map<String, dynamic>);
+        }
+        return Task.fromJson(data);
+      }
+      if (raw['task'] is Map<String, dynamic>) {
+        return Task.fromJson(raw['task'] as Map<String, dynamic>);
       }
       return Task.fromJson(raw);
     }
@@ -24,10 +31,25 @@ class TaskRepository {
   }
 
   List<Task> _extractTaskList(dynamic raw) {
-    if (raw is Map<String, dynamic> && raw['data'] is List) {
-      return (raw['data'] as List)
-          .map((e) => Task.fromJson(e as Map<String, dynamic>))
-          .toList();
+    if (raw is Map<String, dynamic>) {
+      final data = raw['data'];
+      if (data is Map<String, dynamic>) {
+        if (data['tasks'] is List) {
+          return (data['tasks'] as List)
+              .map((e) => Task.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+      }
+      if (data is List) {
+        return data
+            .map((e) => Task.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      if (raw['tasks'] is List) {
+        return (raw['tasks'] as List)
+            .map((e) => Task.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
     }
     if (raw is List) {
       return raw
@@ -37,14 +59,29 @@ class TaskRepository {
     return [];
   }
 
-  Future<List<Task>> getTasks() async {
+  Future<({List<Task> tasks, String? username})> getTasksWithMeta() async {
     try {
       final response = await _dio.get('/tasks');
-      return _extractTaskList(response.data);
+      final tasks = _extractTaskList(response.data);
+      String? username;
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data['data'];
+        if (data is Map<String, dynamic> && data['username'] is String) {
+          username = data['username'] as String;
+        } else if (response.data['username'] is String) {
+          username = response.data['username'] as String;
+        }
+      }
+      return (tasks: tasks, username: username);
     } on DioException catch (e) {
       if (e.error is ApiException) throw e.error!;
       throw mapDioException(e);
     }
+  }
+
+  Future<List<Task>> getTasks() async {
+    final result = await getTasksWithMeta();
+    return result.tasks;
   }
 
   Future<Task> createTask({
