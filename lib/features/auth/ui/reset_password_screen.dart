@@ -13,11 +13,7 @@ class ResetPasswordScreen extends ConsumerStatefulWidget {
   final String? initialEmail;
   final String? initialToken;
 
-  const ResetPasswordScreen({
-    super.key,
-    this.initialEmail,
-    this.initialToken,
-  });
+  const ResetPasswordScreen({super.key, this.initialEmail, this.initialToken});
 
   @override
   ConsumerState<ResetPasswordScreen> createState() =>
@@ -26,28 +22,30 @@ class ResetPasswordScreen extends ConsumerStatefulWidget {
 
 class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   late final TextEditingController _emailController;
-  late final TextEditingController _tokenController;
+  late final String _token; // Store token internally instead of a controller
+
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   bool _isLoading = false;
   String? _errorMessage;
   String? _emailError;
-  String? _tokenError;
   String? _passwordError;
   String? _confirmPasswordError;
 
   @override
   void initState() {
     super.initState();
+    // Auto-fill the email controller
     _emailController = TextEditingController(text: widget.initialEmail ?? '');
-    _tokenController = TextEditingController(text: widget.initialToken ?? '');
+
+    // Save the token internally, falling back to an empty string if missing
+    _token = widget.initialToken ?? '';
   }
 
   @override
   void dispose() {
     _emailController.dispose();
-    _tokenController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -56,13 +54,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     final email = _emailController.text.trim();
-    final token = _tokenController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
-    if (email.isEmpty || token.isEmpty || password.isEmpty) {
+    if (email.isEmpty || _token.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all required fields.')),
+        const SnackBar(
+          content: Text('Missing required fields or reset token.'),
+        ),
       );
       return;
     }
@@ -78,14 +77,15 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       _isLoading = true;
       _errorMessage = null;
       _emailError = null;
-      _tokenError = null;
       _passwordError = null;
       _confirmPasswordError = null;
     });
 
     try {
-      final msg = await ref.read(authRepositoryProvider).resetPassword(
-            token: token,
+      final msg = await ref
+          .read(authRepositoryProvider)
+          .resetPassword(
+            token: _token, // Use the internal token variable here
             email: email,
             password: password,
             passwordConfirmation: confirmPassword,
@@ -104,11 +104,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       if (mounted) {
         setState(() {
           _emailError = e.firstErrorFor('email');
-          _tokenError = e.firstErrorFor('token');
           _passwordError = e.firstErrorFor('password');
           _confirmPasswordError = e.firstErrorFor('password_confirmation');
           if (_emailError == null &&
-              _tokenError == null &&
               _passwordError == null &&
               _confirmPasswordError == null) {
             _errorMessage = e.message;
@@ -154,28 +152,25 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Center(
-                    child: AppLogo(
-                      iconSize: 36,
-                      showText: false,
-                    ),
-                  ),
+                  const Center(child: AppLogo(iconSize: 36, showText: false)),
                   const SizedBox(height: 20),
                   Text(
                     'Reset password',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.4,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.4,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Please enter your new password below',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-                        ),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.65,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -198,28 +193,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AppTextField(
-                        label: 'Reset token',
-                        placeholder: 'Paste the token from your reset email',
-                        controller: _tokenController,
-                        textInputAction: TextInputAction.next,
-                        errorText: _tokenError,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Paste the token from your reset email',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
+                  // (The token field has been completely removed from UI!)
                   PasswordField(
                     label: 'New password',
                     placeholder: 'Password',
