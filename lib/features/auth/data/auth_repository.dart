@@ -21,11 +21,7 @@ class AuthRepository {
     try {
       final response = await _dio.post(
         '/login',
-        data: {
-          'email': email,
-          'password': password,
-          'device_name': deviceName,
-        },
+        data: {'email': email, 'password': password, 'device_name': deviceName},
       );
 
       final data = response.data as Map<String, dynamic>;
@@ -65,7 +61,7 @@ class AuthRepository {
     try {
       final response = await _dio.post(
         '/forgot-password',
-        data: {'email': email},
+        data: {'email': email, 'client': 'mobile'},
       );
       final data = response.data as Map<String, dynamic>;
       return data['message'] as String? ??

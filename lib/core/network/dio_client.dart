@@ -48,7 +48,8 @@ ApiException mapDioException(DioException error) {
     }
 
     if (status == 403) {
-      final isUnverified = message.toLowerCase().contains('not verified') ||
+      final isUnverified =
+          message.toLowerCase().contains('not verified') ||
           message.toLowerCase().contains("isn't verified") ||
           message.toLowerCase().contains('unverified');
       return ForbiddenException(
@@ -84,6 +85,7 @@ final dioProvider = Provider<Dio>((ref) {
       headers: const {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'User-Agent': 'TrackMobileApp/1.0',
       },
     ),
   );
